@@ -2,6 +2,10 @@
 """
 Author: Yang Cao, Acceleration Consortium
 Version: 0.1
+
+A list of functions:
+ - get_logger(logger_name)
+
 """
 
 import os
@@ -11,7 +15,10 @@ import logging
 from datetime import datetime
 
 
-def get_logger(logger_name: str) -> logging.Logger:
+def get_logger(
+        logger_name: str
+) -> logging.Logger:
+
     """
     Creates and configures a logger with the following filename format:
         <hostname>_<username>_<logger_name>_<timestamp>.log
@@ -20,12 +27,14 @@ def get_logger(logger_name: str) -> logging.Logger:
     :param logger_name: The name of the logger to create.
     :return: A configured logger instance.
     """
+
     # Get the local machine name (computer name)
     hostname = socket.gethostname()
     # Get the local user who is running this script
     username = getpass.getuser()
 
     # Create a "Logs" folder in the user's home directory if it doesn't exist
+    # These logs and then be backed up using another utility
     logs_dir = os.path.join(os.path.expanduser("~"), "Logs")
     os.makedirs(logs_dir, exist_ok=True)
 
