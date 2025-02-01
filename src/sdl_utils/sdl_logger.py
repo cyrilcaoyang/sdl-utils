@@ -1,4 +1,3 @@
-
 """
 Author: Yang Cao, Acceleration Consortium
 Version: 0.1
@@ -55,7 +54,7 @@ def get_logger(
 
     # Set a log message format
     formatter = logging.Formatter(
-        fmt="%(asctime)s - %(levelname)s - %(message)s",
+        fmt="%(asctime)s - [%(levelname)s] - %(message)s",
         datefmt="%Y-%m-%d %H:%M:%S"
     )
     file_handler.setFormatter(formatter)
@@ -69,7 +68,7 @@ def get_logger(
 
 if __name__ == "__main__":
     """
-    Example usage of the get_logger function.
+    Example usage of the sdl_logger module.
     """
     # Create a logger named "example_logger"
     test_logger = get_logger("example_logger")
