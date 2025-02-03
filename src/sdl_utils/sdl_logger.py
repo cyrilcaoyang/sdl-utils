@@ -8,6 +8,7 @@ A list of functions:
 """
 
 import os
+import sys
 import socket
 import getpass
 import logging
@@ -62,6 +63,9 @@ def get_logger(
     # Avoid adding multiple handlers if logger is already used
     if not logger.handlers:
         logger.addHandler(file_handler)
+
+    # Also output the stout by streaming the output
+    logger.addHandler(logging.StreamHandler(sys.stdout))
 
     return logger
 
