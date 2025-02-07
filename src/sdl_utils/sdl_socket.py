@@ -1,4 +1,5 @@
 """
+Preconfigured WebSocket implementation for SDLs
 Author: Yang Cao, Acceleration Consortium
 Version: 0.1
 

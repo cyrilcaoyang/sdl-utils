@@ -1,10 +1,10 @@
 """
+A light-weight logger for SDL
 Author: Yang Cao, Acceleration Consortium
 Version: 0.1
 
 A list of functions:
  - get_logger(logger_name)
-
 """
 
 import os
