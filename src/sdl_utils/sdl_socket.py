@@ -1,5 +1,8 @@
 """
 Preconfigured WebSocket implementation for SDLs
+
+Use Socket for file transfers and time-sensitive communications
+
 Author: Yang Cao, Acceleration Consortium
 Version: 0.1
 
@@ -9,12 +12,25 @@ A list of functions:
  - send_file_size
  - receive_file_size
  - receive_file
-
 """
 
 
 def connect_socket(sock, server_ip, server_port, logger=None):
-    pass
+    """
+    Helper: Useful in early returns
+    Return False when connection cannot be established.
+    """
+    try:
+        # Set a 10-second timeout BEFORE connecting, and attempt to connect to server
+        sock.settimeout(10.0)
+        sock.connect((server_ip, server_port))
+        # If successful, reset the timeout if desired to avoid timeout following actions
+        sock.settimeout(None)
+        logger.info("Connected to server")
+    # Catch exceptions
+    except ConnectionError:
+        logger.info("Connection timed out after 10 seconds.")
+        return False
 
 
 def _recv_until_newline(sock):
@@ -47,6 +63,13 @@ def send_file_name(sock, name: str, logger=None):
     logger.info(f"File name {name} sent over")
 
 
+def receive_file_name(sock, logger=None):
+    """
+    Helper: Receives the file name 'value' as string followed by a newline.
+    """
+    return _recv_until_newline(sock)
+
+
 def send_file_size(sock, size: int, logger=None):
     """
     Helper: Sends the INTEGER 'value' as ASCII digits followed by a newline.
@@ -63,7 +86,7 @@ def send_file_size(sock, size: int, logger=None):
 def receive_file_size(sock, logger=None):
     """
     Helper: Receives the INTEGER 'value' as ASCII digits followed by a newline.
-    Application: Receives the file size before sending the file
+    Receives the file size before sending the file
     :param sock: an active socket
     :param logger: a logger
     :return: the integer number
