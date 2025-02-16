@@ -5,6 +5,7 @@ Version: 0.1
 
 A list of functions:
  - connect_socket
+ - send_file_name
  - send_file_size
  - receive_file_size
  - receive_file
@@ -16,40 +17,58 @@ def connect_socket(sock, server_ip, server_port, logger=None):
     pass
 
 
-def send_file_size(sock, value: int, logger=None):
+def _recv_until_newline(sock):
     """
-    Helper: Sends the INTEGER 'value' as ASCII digits followed by a newline.
-    Application: Sends the file size before sending the file
-    :param sock: an active socket
-    :param value: an integer (4 bytes)
-    :param logger: a logger
-    :return: None
-    """
-    message = f"{value}\n"
-    sock.sendall(message.encode("utf-8"))
-    logger.info(f"Integer {value=} sent over")
-
-
-def receive_file_size(conn, logger=None):
-    """
-    Helper: Receives the INTEGER 'value' as ASCII digits followed by a newline.
-    Application: Receives the file size before sending the file
-    :param conn: an active socket
-    :param logger: a logger
-    :return: the integer number
+    Helper: Read bytes from 'conn' until we encounter a newline (b'\\n').
+    Returns the line as a string (minus the newline).
     """
     data_chunks = []
     while True:
-        chunk = conn.recv(1)
+        chunk = sock.recv(1)
         if not chunk:
             # Connection closed or error
-            logger.debug("Did not receive file size from server (connection closed).")
-            raise ConnectionError
+            return ""
         if chunk == b'\n':
             break
         data_chunks.append(chunk)
+    return b''.join(data_chunks).decode('utf-8')
 
-    num_in_str = b''.join(data_chunks).decode('utf-8')
+
+def send_file_name(sock, name: str, logger=None):
+    """
+    Helper: Sends the INTEGER 'value' as ASCII digits followed by a newline.
+    :param sock: an active socket
+    :param name: a string of the file name (path.basename)
+    :param logger: a logger
+    :return: None
+    """
+    message = name + "\n"
+    sock.sendall(message.encode("utf-8"))
+    logger.info(f"File name {name} sent over")
+
+
+def send_file_size(sock, size: int, logger=None):
+    """
+    Helper: Sends the INTEGER 'value' as ASCII digits followed by a newline.
+    :param sock: an active socket
+    :param size: an integer (4 bytes)
+    :param logger: a logger
+    :return: None
+    """
+    message = f"{size}\n"
+    sock.sendall(message.encode("utf-8"))
+    logger.info(f"File {size=} sent over")
+
+
+def receive_file_size(sock, logger=None):
+    """
+    Helper: Receives the INTEGER 'value' as ASCII digits followed by a newline.
+    Application: Receives the file size before sending the file
+    :param sock: an active socket
+    :param logger: a logger
+    :return: the integer number
+    """
+    num_in_str = _recv_until_newline(sock)
     try:
         # Parse the string into an integer
         file_size = int(num_in_str)
@@ -69,7 +88,6 @@ def receive_file(sock, chunk_size, file_size, logger=None):
     :param logger: a logger
     :return: the received file
     """
-
     # Receive the actual file data in chunks
     received_file = b''
     bytes_received = 0
