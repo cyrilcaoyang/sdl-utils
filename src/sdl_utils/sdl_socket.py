@@ -27,11 +27,11 @@ def connect_socket(sock, server_ip, server_port, logger=None):
         # If successful, reset the timeout if desired to avoid timeout following actions
         sock.settimeout(None)
         logger.info("Connected to server")
-        return True
+        return sock
     # Catch exceptions
     except ConnectionError:
         logger.info("Connection timed out after 10 seconds.")
-        return False
+        return None
 
 
 def _recv_until_newline(sock):
