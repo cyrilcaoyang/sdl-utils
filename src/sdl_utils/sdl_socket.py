@@ -55,7 +55,7 @@ def send_file_name(sock, name: str, logger=None):
     """
     Helper: Sends the INTEGER 'value' as ASCII digits followed by a newline.
     :param sock: an active socket
-    :param name: a string of the file name (path.basename)
+    :param name: a string of the file name (os.path.basename)
     :param logger: a logger
     :return: None
     """
@@ -102,13 +102,13 @@ def receive_file_size(sock, logger=None):
         raise ValueError(f"Could not parse '{num_in_str}' into int")
 
 
-def receive_file(sock, chunk_size, file_size, logger=None):
+def receive_file(sock, file_size, chunk_size=1024, logger=None):
     """
     After getting the header of the file size,
     start to receive the file in chunks
     :param sock: open socket
-    :param chunk_size: the size of each chunk to be sent as part of the file
     :param file_size: the exact size of the file
+    :param chunk_size: the size of each chunk to be sent as part of the file
     :param logger: a logger
     :return: the received file
     """
