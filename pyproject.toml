@@ -4,30 +4,52 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "sdl-utils"
-version = "0.1.0"
-description='Python utils package for self-driving labs'
+version = "0.1.1"
+description = "Python utils package for self-driving labs"
 readme = "README.md"
 license = {file = "LICENSE"}
 requires-python = ">=3.8"
-dependencies = []
+dependencies = [
+    "prefect>=2.10.0",
+    "paho-mqtt>=2.0.0",
+    "pydantic>=2.0.0",
+    "python-dotenv>=1.0.0",
+    "typing-extensions>=4.0.0",
+    "sqlite3worker>=1.1.7",
+    "loguru>=0.7.0",
+    "cryptography>=41.0.0"  # Required for AWS IoT SSL
+]
 
 # More at https://pypi.org/classifiers/
 classifiers = [
-    "Development Status :: 1 - Planning",
-    "License :: MIT",
+    "Development Status :: 3 - Alpha",
+    "License :: OSI Approved :: MIT License",
     "Programming Language :: Python",
     "Programming Language :: Python :: 3",
     "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
     "Intended Audience :: Developers",
     "Intended Audience :: Science/Research",
     "Natural Language :: English",
     "Operating System :: OS Independent",
     "Topic :: Software Development",
+    "Topic :: Scientific/Engineering",
+    "Framework :: Prefect"
 ]
 
 authors = [
     {name = "Yang Cao", email = "cyrilcaoyang@gmail.com"}
 ]
 
+[project.urls]
+"Homepage" = "https://github.com/cyrilcaoyang/sdl-utils"
+
 [tool.setuptools.package-dir]
 sdl_utils = 'src/sdl_utils'
+
+[tool.setuptools.packages.find]
+where = ["src"]
+include = ["sdl_utils*"]
+exclude = ["tests*"]
