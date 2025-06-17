@@ -1,15 +1,42 @@
+# General
 .DS_Store
-.idea/misc.xml
-.idea/modules.xml
-.idea/sdl-utils.iml
-.idea/vcs.xml
-.idea/workspace.xml
-.idea/inspectionProfiles/profiles_settings.xml
-.idea/inspectionProfiles/Project_Default.xml
-sdl_utils.egg-info/dependency_links.txt
-sdl_utils.egg-info/PKG-INFO
-sdl_utils.egg-info/SOURCES.txt
-sdl_utils.egg-info/top_level.txt
-.vscode/settings.json
-src/.DS_Store
-src/sdl_utils/.DS_Store
+*.swp
+*.bak
+*.tmp
+*~
+*.log
+
+# Environment files
+.env
+.env.local
+.env.*.local
+
+# Python
+__pycache__/
+*.py[cod]
+*.egg-info/
+*.egg
+dist/
+build/
+pip-log.txt
+.pytest_cache/
+.coverage
+htmlcov/
+
+# IDEs
+.idea/
+.vscode/
+*.iml
+*.ipr
+*.iws
+
+# Virtual environments
+venv/
+env/
+.venv/
+
+# Jupyter Notebook
+.ipynb_checkpoints/
+
+# Package specific
+sdl_utils.egg-info/

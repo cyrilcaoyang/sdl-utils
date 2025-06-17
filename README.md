@@ -4,17 +4,7 @@ A comprehensive Python utilities package for self-driving labs, designed to work
 
 ## Features
 
-- **Lightweight Prefect Client**: Workflow management optimized for resource-constrained devices
-  - Local state caching
-  - Automatic retry mechanism
-  - Workflow status tracking
-  - Minimal memory footprint
-
 - **AWS IoT Integration**: Secure cloud connectivity for IoT devices
-  - Secure SSL/TLS connection
-  - Automatic reconnection
-  - Message queuing
-  - Topic subscription
   - Optimized for resource-constrained devices
 
 - **Socket Utilities**: File transfer and communication tools
@@ -24,35 +14,53 @@ A comprehensive Python utilities package for self-driving labs, designed to work
   - Connection management
 
 - **MQTT Client**: Message queuing for IoT devices
-  - Lightweight implementation
-  - Easy integration with lab equipment
-  - Reliable message delivery
+  - To be added
 
 - **SQLite Database**: Local data storage
-  - Efficient data management
-  - Thread-safe operations
-  - Minimal resource usage
+  - To be added
 
 - **Logging System**: Comprehensive logging capabilities
-  - Configurable log levels
-  - File and console output
   - Structured logging format
+  - Optional Slack integration for critical alerts
+
+- **Prefect Orchestration**: Build robust, observable workflows with human in the loop
+  - Separate roles for orchestrators (full computers) and workers (Raspberry Pi).
+  - Deploy tasks to workers over SSH.
+  - Automatic retries, caching, and structured feedback from workers.
+  - Interactive approvals via Slack to add a human-in-the-loop.
 
 ## Installation
 
+You can install the package using pip:
+
 ```bash
-pip install sdl-utils
+pip install .
 ```
+
+### Optional Dependencies
+
+This package includes optional features that require extra dependencies. You can install them as needed.
+
+- **Full Orchestration Node**: To run a full Prefect orchestrator, install the `full` extras:
+  ```bash
+  pip install ".[full]"
+  ```
+
+- **Slack Integration**: To enable Slack notifications and interactive approvals, you will need to install the `full` extras (`pip install ".[full]"`) and configure the following environment variables:
+  - `SLACK_BOT_TOKEN`: Your Slack app's bot token.
+  - `DEFAULT_SLACK_CHANNEL`: The default channel for messages (e.g., `#my-lab-alerts`).
+  - `SLACK_LOGGING_CHANNEL`: The specific channel for critical log alerts.
+
+- **Worker Node**: For a lightweight worker node (like a Raspberry Pi Zero), install the `worker` extras:
+  ```bash
+  pip install ".[worker]"
+  ```
 
 ## Configuration
 
 Create a `.env` file in your project root with your configuration:
 
 ```env
-# Prefect Client Configuration
-PREFECT_API_URL=your_prefect_api_url
-PREFECT_API_KEY=your_prefect_api_key
-
 # AWS IoT Configuration
 AWS_IOT_ENDPOINT=your_aws_iot_endpoint
 AWS_IOT_CLIENT_ID=your_device_id
@@ -82,24 +90,6 @@ if connect_aws_iot():
         print(f"Received message on {topic}: {payload}")
     
     subscribe_topic("lab/commands", on_message)
-```
-
-### Workflow Management
-
-```python
-from sdl_utils import create_workflow, run_workflow, get_workflow_status
-
-@create_workflow(name="lab_experiment", retries=3)
-def run_experiment(temperature, duration):
-    # Your experiment code here
-    pass
-
-# Run the workflow
-workflow_id = run_workflow(run_experiment, temperature=25, duration=60)
-
-# Check status
-status = get_workflow_status(workflow_id)
-print(f"Workflow status: {status['status']}")
 ```
 
 ### Socket Communication
@@ -138,14 +128,52 @@ db.execute("CREATE TABLE IF NOT EXISTS experiments (id INTEGER PRIMARY KEY, name
 db.execute("INSERT INTO experiments (name) VALUES (?)", ("experiment_1",))
 ```
 
+### Prefect Orchestration
+
+```python
+# On your orchestrator machine (e.g., your laptop)
+# Make sure to install with: pip install ".[full]"
+from sdl_utils.prefect import flow, deploy_task_to_worker, request_slack_approval
+from sdl_utils.logger import logger
+
+@flow(name="Run Lab Experiment with Approval")
+def run_experiment_flow(worker_address: str, command: str):
+    """
+    This flow requests approval on Slack, and if approved,
+    deploys a command to a remote worker.
+    """
+    logger.info(f"Requesting approval to run '{command}' on {worker_address}")
+    
+    approval = request_slack_approval(
+        prompt=f"Please approve running command: `{command}` on worker `{worker_address}`."
+    )
+
+    if approval == "approved":
+        logger.info("Approval received. Deploying task...")
+        # deploy_task_to_worker is a Prefect @task
+        worker_feedback = deploy_task_to_worker(
+            worker_address=worker_address,
+            command_to_run=command
+        )
+        logger.info(f"Worker task finished. Feedback: {worker_feedback}")
+    else:
+        logger.warning(f"Approval was '{approval}'. Task cancelled.")
+
+# To run this flow from Python:
+# if __name__ == "__main__":
+#     run_experiment_flow(worker_address="pi@192.168.1.42", command="echo 'Hello from worker'")
+```
+
 ### Logging
 
 ```python
-from sdl_utils import get_logger
+from sdl_utils.logger import logger
 
-logger = get_logger("lab_experiment")
-logger.info("Starting experiment")
-logger.error("Error occurred", exc_info=True)
+# The logger is a pre-configured Loguru instance.
+logger.info("Starting up the system...")
+logger.info("Running experiment {name}", name="Photosynthesis Analysis")
+logger.warning("Sensor reading is high.")
+logger.error("Failed to connect to device.") # This will be sent to Slack if configured
 ```
 
 ## Raspberry Pi Zero Support
@@ -153,10 +181,8 @@ logger.error("Error occurred", exc_info=True)
 This package is specifically optimized for resource-constrained devices like Raspberry Pi Zero:
 
 - Minimal memory footprint
-- Efficient local storage
 - Built-in retry mechanisms
 - No heavy dependencies
-- Compatible with ARM architecture
 - Optimized AWS IoT integration
 
 ## Development
@@ -166,7 +192,7 @@ To install the package in development mode:
 ```bash
 git clone https://github.com/cyrilcaoyang/sdl-utils.git
 cd sdl-utils
-pip install -e .
+pip install -e ".[full]"
 ```
 
 ## License
