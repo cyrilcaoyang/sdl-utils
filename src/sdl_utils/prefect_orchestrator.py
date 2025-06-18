@@ -3,7 +3,7 @@ from prefect.tasks import task_input_hash
 from datetime import timedelta
 import subprocess
 import json
-from sdl_utils.slack import ask_for_approval, await_approval_response, send_slack_message
+from .slack_bot import ask_for_approval, await_approval_response, send_slack_message
 
 @task(
     name="Deploy Task to Worker",
