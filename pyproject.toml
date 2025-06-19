@@ -20,16 +20,14 @@ classifiers = [
 ]
 dependencies = [
     "paho-mqtt>=2.0.0",
-    "pydantic>=2.0.0",
     "python-dotenv>=1.0.0",
     "typing-extensions>=4.0.0",
-    "sqlite3worker>=1.1.7",
-    "cryptography>=41.0.0"
+    "sqlite3worker>=1.1.7"
 ]
 
 [project.optional-dependencies]
-full = ["prefect>=2.10.0", "slack_bolt", "slack_sdk"]
-worker = ["prefect-shell"]
+full = ["prefect>=2.10.0", "slack_bolt", "slack_sdk", "prefect-shell"]
+worker = ["prefect>=2.10.0", "prefect-shell"]
 
 [tool.setuptools.packages.find]
 where = ["src"]

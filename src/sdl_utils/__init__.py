@@ -4,10 +4,10 @@ from .aws_iot import AWSIoTClient, connect_aws_iot, publish_message, subscribe_t
 from .socket import connect_socket, send_file_name, receive_file_name, send_file_size, receive_file_size, receive_file
 
 # --- Prefect Orchestration (Full Nodes Only) ---
-from .prefect import is_worker_node
+from .prefect_runtime import is_worker_node
 if not is_worker_node():
     try:
-        from .prefect_orchestrator import deploy_task_to_worker, request_slack_approval, example_approval_flow
+        from .prefect_orchestrator import run_command_on_worker, request_slack_approval, example_shell_command_flow
         from .slack_bot import slack_client, send_slack_message, ask_for_approval, await_approval_response
         from prefect import flow, task
     except ImportError:
@@ -16,7 +16,8 @@ if not is_worker_node():
 
 # --- Worker Node Functionality ---
 else:
-    from .prefect_worker import execute_remote_task
+    # This can be expanded if worker-specific helper functions are added later
+    pass
 
 # --- Public API ---
 # This defines what `from sdl_utils import *` will import.
@@ -44,13 +45,14 @@ if not is_worker_node():
     __all__.extend([
         "flow", 
         "task",
-        "deploy_task_to_worker",
+        "run_command_on_worker",
         "request_slack_approval",
-        "example_approval_flow",
+        "example_shell_command_flow",
         "slack_client",
         "send_slack_message",
         "ask_for_approval",
         "await_approval_response"
     ])
 else:
-    __all__.append("execute_remote_task")
+    # This can be expanded if worker-specific helper functions are added later
+    pass

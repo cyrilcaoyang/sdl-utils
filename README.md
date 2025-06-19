@@ -5,12 +5,9 @@ A comprehensive Python utilities package for self-driving labs, designed to work
 ## Features
 
 - **AWS IoT Integration**: Secure cloud connectivity for IoT devices
-  - Optimized for resource-constrained devices
 
 - **Socket Utilities**: File transfer and communication tools
-  - File name transfer
-  - File size transfer
-  - File content transfer
+  - File name transfer, File size transfer, File content transfer
   - Connection management
 
 - **MQTT Client**: Message queuing for IoT devices
@@ -23,11 +20,11 @@ A comprehensive Python utilities package for self-driving labs, designed to work
   - Structured logging format
   - Optional Slack integration for critical alerts
 
-- **Prefect Orchestration**: Build robust, observable workflows with human in the loop
-  - Separate roles for orchestrators (full computers) and workers (Raspberry Pi).
-  - Deploy tasks to workers over SSH.
-  - Automatic retries, caching, and structured feedback from workers.
-  - Interactive approvals via Slack to add a human-in-the-loop.
+- **Prefect Orchestration**: Build robust, observable workflows with human-in-the-loop approvals.
+  - **Pull Architecture**: worker pull tasks from a central server, rather than having tasks pushed to them.
+  - **Work Pools**: Orchestrate different types of workers (e.g., a pool for Raspberry Pis, a pool for lab servers) using work pools.
+  - **Shell Commands**: Seamlessly run any shell command on a worker as part of a workflow.
+  - **Interactive Approvals**: Add manual approval steps in your workflows using Slack.
 
 ## Installation
 
@@ -73,6 +70,68 @@ MQTT_BROKER=your_mqtt_broker
 MQTT_PORT=your_mqtt_port
 ```
 
+### Managing Prefect Profiles (Local vs. Cloud)
+
+Prefect's functionality can be directed at either a local server running on your machine or the Prefect Cloud service. The recommended way to manage these two environments is with Prefect Profiles.
+
+The orchestrator (your laptop) and the worker (the Pi) do not need to be on the same profile, but they MUST be pointed at the same server for the system to work. In a production setup, both your laptop and your Pi would be using the cloud profile.
+
+**Step 1: Set Up the `local` Profile**
+
+This profile will be used to interact with a local Prefect server on the same Local Network.
+
+1.  Find your orchestrator's local network IP address (e.g., `192.168.1.101`).
+    - On **macOS**: `ipconfig getifaddr en0`
+    - On **Windows**: `ipconfig` (look for the "IPv4 Address" under your active network adapter).
+    - On **Linux**: `ip -a` or `ifconfig`
+
+2. on your server, ensure the `default` profile is configured for local use.
+
+```bash
+# Switch to the default profile (if not already active)
+prefect profile use default
+prefect config set PREFECT_API_URL=http://127.0.0.1:4200/api
+```
+
+To run the local server on Local Network, use the following command in your terminal to make it accessible on the network (0.0.0.0 will work even if your IP changes or if you have multiple network connections):
+
+```bash
+prefect server start --host 0.0.0.0
+```
+
+3. On the worker machine, repeat step 1, and in step 2, set the API URL to the orchestrator's IP.
+
+```bash
+ `prefect config set PREFECT_API_URL="http://192.168.1.101:4200/api"`
+```
+
+**Step 2: Set Up the `cloud` Profile**
+
+This profile will connect to your Prefect Cloud workspace. Use the same Prefect Profile for the orchestrator and worker.
+
+```bash
+# Create a new profile for your cloud connectionm and switch to it
+prefect profile create cloud
+prefect profile use cloud
+
+# Log in to Prefect Cloud. This will prompt you to authenticate in your browser.
+prefect cloud login
+```
+
+That's it!
+
+**Step 3: Switching Between Environments**
+
+Once set up, you can easily switch between your local and cloud environments with a single command before running your flows.
+
+```bash
+# Switch to your local server
+prefect profile use default
+
+# Switch to Prefect Cloud
+prefect profile use cloud
+```
+
 ## Usage Examples
 
 ### AWS IoT Integration
@@ -110,59 +169,66 @@ receive_file(client_socket, file_name)
 
 ### MQTT Communication
 
-```python
-from sdl_utils import MQTTClient
-
-mqtt_client = MQTTClient()
-mqtt_client.connect()
-mqtt_client.publish("lab/status", "experiment_completed")
-```
 
 ### Database Operations
 
-```python
-from sdl_utils import SQLiteDB
 
-db = SQLiteDB("lab_data.db")
-db.execute("CREATE TABLE IF NOT EXISTS experiments (id INTEGER PRIMARY KEY, name TEXT)")
-db.execute("INSERT INTO experiments (name) VALUES (?)", ("experiment_1",))
+
+### Prefect Orchestration with Workers
+
+This package uses a "pull" model for orchestration. You define flows on your main machine (orchestrator), and resource-constrained devices (workers) connect to a work pool to pick up and execute tasks.
+
+**Step 1: Create a Work Pool**
+
+First, create a work pool for your workers to connect to. You only need to do this once. A common pattern is to have a pool for a specific type of worker, like all your Raspberry Pis.
+
+From your orchestrator machine (e.g., your laptop), run:
+
+```bash
+# This creates a pool of type 'process' that workers can join.
+prefect work-pool create "my-pi-pool" --type process
 ```
 
-### Prefect Orchestration
+**Step 2: Start a Worker**
+
+On your worker machine (e.g., a Raspberry Pi), start a worker and point it to the work pool you created. The worker will poll for tasks to execute.
+
+```bash
+# Install the minimal worker dependencies
+pip install "sdl-utils[worker]"
+
+# This command connects the worker to the "my-pi-pool"
+prefect worker start --pool "my-pi-pool"
+```
+
+**Step 3: Deploy a Flow**
+
+A deployment tells Prefect how to run a flow, including which work pool to send the tasks to. On your orchestrator machine, create a Python file (e.g., `my_deployment.py`):
 
 ```python
-# On your orchestrator machine (e.g., your laptop)
-# Make sure to install with: pip install ".[full]"
-from sdl_utils import flow, deploy_task_to_worker, request_slack_approval
-from sdl_utils import logger
+# my_deployment.py
+from sdl_utils import example_shell_command_flow
 
-@flow(name="Run Lab Experiment with Approval")
-def run_experiment_flow(worker_address: str, command: str):
-    """
-    This flow requests approval on Slack, and if approved,
-    deploys a command to a remote worker.
-    """
-    logger.info(f"Requesting approval to run '{command}' on {worker_address}")
-    
-    approval = request_slack_approval(
-        prompt=f"Please approve running command: `{command}` on worker `{worker_address}`."
+if __name__ == "__main__":
+    example_shell_command_flow.serve(
+        name="my-first-deployment",
+        work_pool_name="my-pi-pool"
     )
-
-    if approval == "approved":
-        logger.info("Approval received. Deploying task...")
-        # deploy_task_to_worker is a Prefect @task
-        worker_feedback = deploy_task_to_worker(
-            worker_address=worker_address,
-            command_to_run=command
-        )
-        logger.info(f"Worker task finished. Feedback: {worker_feedback}")
-    else:
-        logger.warning(f"Approval was '{approval}'. Task cancelled.")
-
-# To run this flow from Python:
-# if __name__ == "__main__":
-#     run_experiment_flow(worker_address="pi@192.168.1.42", command="echo 'Hello from worker'")
 ```
+Now, run this file to create the deployment on the Prefect server:
+```bash
+python my_deployment.py
+```
+
+**Step 4: Run the Deployed Flow**
+
+You can now trigger a run of this deployment from the Prefect UI, or from the command line:
+
+```bash
+prefect deployment run "Example Shell Command Flow/my-first-deployment" -p "command=ls -la"
+```
+
+This will run the `example_shell_command_flow`, which will ask for your approval on Slack. If you approve, the `ls -la` command will be sent to the `my-pi-pool`, where your running worker will pick it up and execute it.
 
 ### Logging
 
@@ -197,8 +263,8 @@ logger.error("This will be sent to Slack if configured.")
 
 This package is specifically optimized for resource-constrained devices like Raspberry Pi Zero:
 
-- Minimal memory footprint
-- Built-in retry mechanisms
+- **Lightweight Workers**: The worker model allows Pis to run with minimal overhead, simply polling for tasks.
+- **Pull Architecture**: Avoids the need for direct SSH access or open ports on the worker devices.
 - No heavy dependencies
 - Optimized AWS IoT integration
 
