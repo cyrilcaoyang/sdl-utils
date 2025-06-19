@@ -133,8 +133,8 @@ db.execute("INSERT INTO experiments (name) VALUES (?)", ("experiment_1",))
 ```python
 # On your orchestrator machine (e.g., your laptop)
 # Make sure to install with: pip install ".[full]"
-from sdl_utils.prefect import flow, deploy_task_to_worker, request_slack_approval
-from sdl_utils.logger import logger
+from sdl_utils import flow, deploy_task_to_worker, request_slack_approval
+from sdl_utils import logger
 
 @flow(name="Run Lab Experiment with Approval")
 def run_experiment_flow(worker_address: str, command: str):
@@ -166,14 +166,31 @@ def run_experiment_flow(worker_address: str, command: str):
 
 ### Logging
 
+The logging module provides two ways to get a logger, ensuring both backward compatibility and access to modern features.
+
+**1. Backward-Compatible File Logger (`get_logger`)**
+
+Use this function when you need to maintain the exact file naming and message format of legacy systems.
+
 ```python
-from sdl_utils.logger import logger
+from sdl_utils import get_logger
+
+# This creates a log file in ~/Logs/ with the legacy format.
+legacy_log = get_logger("my_experiment_logger")
+legacy_log.info("This message goes to a specific file.")
+```
+
+**2. Modern Console & Slack Logger (`logger`)**
+
+For new development, use the pre-configured `loguru` instance directly. It provides beautiful console output and automatic Slack alerts.
+
+```python
+from sdl_utils import logger
 
 # The logger is a pre-configured Loguru instance.
-logger.info("Starting up the system...")
-logger.info("Running experiment {name}", name="Photosynthesis Analysis")
-logger.warning("Sensor reading is high.")
-logger.error("Failed to connect to device.") # This will be sent to Slack if configured
+logger.info("This message goes to the console with rich formatting.")
+logger.warning("A warning message.")
+logger.error("This will be sent to Slack if configured.")
 ```
 
 ## Raspberry Pi Zero Support
