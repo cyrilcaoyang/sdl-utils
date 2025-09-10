@@ -28,30 +28,38 @@ A comprehensive Python utilities package for self-driving labs, designed to work
 
 ## Installation
 
-You can install the package using pip:
+### Basic Installation (No Prefect)
+
+For basic functionality without Prefect orchestration:
 
 ```bash
 pip install .
 ```
 
-### Optional Dependencies
+This includes core utilities like logging, AWS IoT, socket communication, and MQTT.
 
-This package includes optional features that require extra dependencies. You can install them as needed.
+### Prefect Integration Options
 
-- **Full Orchestration Node**: To run a full Prefect orchestrator, install the `full` extras:
+This package supports different Prefect installation modes depending on your use case:
+
+- **Full Orchestration Node**: For computers that will orchestrate workflows and send commands to workers:
   ```bash
-  pip install ".[full]"
+  pip install ".[prefect-full]"
   ```
+  This includes Prefect, prefect-shell, Slack integration, and all orchestration features.
 
-- **Slack Integration**: To enable Slack notifications and interactive approvals, you will need to install the `full` extras (`pip install ".[full]"`) and configure the following environment variables:
-  - `SLACK_BOT_TOKEN`: Your Slack app's bot token.
-  - `DEFAULT_SLACK_CHANNEL`: The default channel for messages (e.g., `#my-lab-alerts`).
-  - `SLACK_LOGGING_CHANNEL`: The specific channel for critical log alerts.
-
-- **Worker Node**: For a lightweight worker node (like a Raspberry Pi Zero), install the `worker` extras:
+- **Worker Node**: For devices that will execute tasks (like Raspberry Pi Zero/2W):
   ```bash
-  pip install ".[worker]"
+  pip install ".[prefect-worker]"
   ```
+  This includes only the Prefect client needed to receive and execute tasks.
+
+### Slack Integration
+
+To enable Slack notifications and interactive approvals, install the `prefect-full` extras and configure these environment variables:
+- `SLACK_BOT_TOKEN`: Your Slack app's bot token.
+- `DEFAULT_SLACK_CHANNEL`: The default channel for messages (e.g., `#my-lab-alerts`).
+- `SLACK_LOGGING_CHANNEL`: The specific channel for critical log alerts.
 
 ## Configuration
 
@@ -195,7 +203,7 @@ On your worker machine (e.g., a Raspberry Pi), start a worker and point it to th
 
 ```bash
 # Install the minimal worker dependencies
-pip install "sdl-utils[worker]"
+pip install "sdl-utils[prefect-worker]"
 
 # This command connects the worker to the "my-pi-pool"
 prefect worker start --pool "my-pi-pool"
@@ -275,7 +283,7 @@ To install the package in development mode:
 ```bash
 git clone https://github.com/cyrilcaoyang/sdl-utils.git
 cd sdl-utils
-pip install -e ".[full]"
+pip install -e ".[prefect-full]"
 ```
 
 ## License

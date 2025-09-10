@@ -4,7 +4,7 @@ build-backend = "setuptools.build_meta"
 
 [project]
 name = "sdl-utils"
-version = "0.2.0"
+version = "0.3.0"
 description = "SDL Utilities for lab workflow management"
 authors = [{name = "Yang Cao", email = "cyrilcaoyang@gmail.com"}]
 readme = "README.md"
@@ -26,8 +26,15 @@ dependencies = [
 ]
 
 [project.optional-dependencies]
-full = ["prefect>=2.10.0", "slack_bolt", "slack_sdk", "prefect-shell"]
-worker = ["prefect>=2.10.0", "prefect-shell"]
+prefect-full = [
+    "prefect>=2.10.0",
+    "prefect-shell>=0.2.0",
+    "slack_bolt>=1.18.0",
+    "slack_sdk>=3.19.0"
+]
+prefect-worker = [
+    "prefect>=2.10.0"
+]
 
 [tool.setuptools.packages.find]
 where = ["src"]
